@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 
 mod instructions;
 mod states;
-use crate::instructions::InitializePlatform;
 
 declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 
@@ -10,7 +9,7 @@ declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 pub mod bidx {
 
     use crate::instructions::{
-        CreateAuction, FreezeAuctions, InitializePlatform, RegisterAuthenticator,
+        CreateAuction, FreezeAuctions, InitializePlatform, RegisterAuthenticator, PlaceBid,
         RemoveAuthenticator, UpdateAuthentication,
     };
 
@@ -28,12 +27,12 @@ pub mod bidx {
         start_date: i64,
         end_date: i64,
     ) -> Result<()> {
-        ctx.accounts.create_auction()?;
+        ctx.accounts.create(starting_bid, reserved_bid, start_date, end_date)?;
         Ok(())
     }
 
-    pub fn place_bid(ctx: Context<PlaceBid>) -> Result<()> {
-        ctx.accounts.place_bid()?;
+    pub fn place_bid(ctx: Context<PlaceBid>, amount: u64) -> Result<()> {
+        ctx.accounts.place_bid(amount)?;
         Ok(())
     }
 

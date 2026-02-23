@@ -1,11 +1,20 @@
 use anchor_lang::prelude::*;
 
-use crate::states::Auction;
+use crate::states::{AssetType, Auction, AuctionStatus, SellerState};
 
 #[derive(Accounts)]
 pub struct CreateAuction<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
+    #[account(
+        init_if_needed,
+        payer = seller,
+        space = 8 + SellerState::INIT_SPACE,
+        seeds = [b"seller_state", seller.key().as_ref()],
+        bump
+    )]
+    pub seller_state: Account<'info, SellerState>,
+
     #[account(
         init,
         payer = seller,
@@ -20,14 +29,32 @@ pub struct CreateAuction<'info> {
 }
 
 impl<'info> CreateAuction<'info> {
-    pub fn new(
+    pub fn create(
         &mut self,
+        accepted_token: Pubkey,
         starting_bid: u64,
         reserved_price: u64,
         start_date: i64,
         end_date: i64,
+        asset_type: AssetType
     ) -> Result<()> {
-        // I NEED TO MAE THE START AND END DATES OPTIONAL
+        // I NEED TO MAKE THE START AND END DATES OPTIONAL
+        // CHECKS
+        self.auction.set_inner({
+            Auction {
+                seller: self.seller.key(),
+                accepted_token: accepted_token.key(),
+                reserved_price,
+                starting_bid,
+                start_date,
+                end_date,
+                auction_status: AuctionStatus::Pending,
+                auth_status: AuctionStatus::Pending, //IF NFT "NOTREQUIRED"
+                item_vault: self.item_vault.key(),
+                nft_mint: self.nft_mint.key(),  
+                asset_type,
+            }
+        });
         Ok(())
     }
 }

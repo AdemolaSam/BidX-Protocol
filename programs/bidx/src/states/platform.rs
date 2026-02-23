@@ -3,13 +3,12 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct PlatformConfig {
-    pub admin: Pubkey, // is single admin multi sig? How do I allow multiple admins?
-    pub platform_fee: u64,
-    pub treasury: Pubkey,
-    pub treasury_mint: Pubkey,
-    pub platform_fee_token_decimals: u8,
+    pub admin: Pubkey,              // Multisig wallet address (Squads)
+    pub platform_fee_bps: u16,      // Basis points (250 = 2.5%)
+    pub treasury_usdc: Pubkey,      // ATA for USDC fees
+    pub treasury_sol: Pubkey,       // ATA for SOL fees
     pub is_paused: bool,
-    pub min_auction_duration: u64,
-    pub max_auction_duration: u64,
+    pub min_auction_duration: i64,
+    pub max_auction_duration: i64,
     pub bump: u8,
 }
