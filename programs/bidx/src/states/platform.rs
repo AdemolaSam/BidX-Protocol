@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct PlatformConfig {
-    pub admin: Pubkey,              // Multisig wallet address (Squads)
+    pub admin: Pubkey,              // Single wallet for POC (Multisig wallet address (Squads) Later)
     pub platform_fee_bps: u16,      // Basis points (250 = 2.5%)
     pub treasury_usdc: Pubkey,      // ATA for USDC fees
     pub treasury_sol: Pubkey,       // ATA for SOL fees
