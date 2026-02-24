@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::states::AuthenticatorsRegistry;
+use crate::errors::ConfigError;
 
 #[derive(Accounts)]
 pub struct RemoveAuthenticator<'info> {
@@ -16,10 +17,25 @@ pub struct RemoveAuthenticator<'info> {
 
 impl<'info> RemoveAuthenticator<'info> {
     pub fn remove_authenticator(&mut self, authenticator: Pubkey) -> Result<()> {
-        //CHECKS
+       
+        require!(
+            self.admin.key() == self.registry.admin.key(),
+            ConfigError::ExclusiveToAdmin
+        );
+
         // is authenticator registered?
-        // is the authenticator a valid keypair?
-        // is the authenticator currently verifying an auction? (replace authenticator, notify seller)
+        require!(
+            self.registry.authenticators.contains(&authenticator),
+            ConfigError::AuthenticatorNotInRegistry
+        );
+
+        // WARNING: Removing an authenticator with pending verifications
+        // will cause those auctions to become stuck in "Pending" state.
+        // Sellers will need to cancel and relist.
+        // Admin should coordinate off-chain before removal.
+        let auth_index = self.registry.authenticators.iter().position(|& el| el == authenticator).unwrap();
+
+        self.registry.authenticators.swap_remove(auth_index);
         Ok(())
     }
 }

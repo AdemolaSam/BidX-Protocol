@@ -2,45 +2,53 @@ use anchor_lang::prelude::*;
 
 mod instructions;
 mod states;
+mod errors;
 
 declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 
 #[program]
 pub mod bidx {
 
-    use crate::instructions::{
-        CreateAuction, FreezeAuctions, InitializePlatform, RegisterAuthenticator, PlaceBid,
-        RemoveAuthenticator, UpdateAuthentication,
-    };
+    use crate::{instructions::{
+        CreateAuction, CreateAuctionBumps, FreezeAuctions, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticator, RemoveAuthenticator, UpdateAuthentication
+    }, states::AssetType};
 
     use super::*;
 
-    pub fn initialize(ctx: Context<InitializePlatform>, authenticators: Vec<Pubkey>) -> Result<()> {
-        ctx.accounts.initialize_platform(authenticators)?;
+    pub fn initialize(
+        ctx: Context<InitializePlatform>,
+        platform_fee_bps: u16,
+        min_auction_duration: i64,
+        max_auction_duration: i64,
+        authenticators: Vec<Pubkey>,
+    ) -> Result<()> {
+        ctx.accounts.initialize_platform(platform_fee_bps, min_auction_duration, max_auction_duration, authenticators, &InitializePlatformBumps)?;
         Ok(())
     }
 
     pub fn creeate_auction(
         ctx: Context<CreateAuction>,
+        accepted_token: Pubkey,
         starting_bid: u64,
         reserved_price: u64,
         start_date: i64,
         end_date: i64,
+        asset_type: AssetType,
     ) -> Result<()> {
-        ctx.accounts.create(starting_bid, reserved_bid, start_date, end_date)?;
+        ctx.accounts.create(accepted_token, starting_bid, reserved_bid, start_date, end_date, asset_type, &CreateAuctionBumps)?;
         Ok(())
     }
 
-    pub fn place_bid(ctx: Context<PlaceBid>, amount: u64) -> Result<()> {
-        ctx.accounts.place_bid(amount)?;
+    pub fn place_bid(ctx: Context<PlaceBid>, amount: u64, bumps: &PlaceBidBumps) -> Result<()> {
+        ctx.accounts.place_bid(amount, bumps)?;
         Ok(())
     }
 
-    pub fn register_authenticator(
-        ctx: Context<RegisterAuthenticator>,
-        authenticator: Pubkey,
+    pub fn register_authenticators(
+        ctx: Context<RegisterAuthenticators>,
+        authenticators: vec<Pubkey>,
     ) -> Result<()> {
-        ctx.accounts.register_authenticator(authenticator)
+        ctx.accounts.register_authenticators(authenticators)
     }
 
     pub fn remove_authenticator(

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::states::{AuthenticatorsRegistry, PlatformConfig, platform};
+use crate::states::{AuthenticatorsRegistry, PlatformConfig};
 
 #[derive(Accounts)]
 pub struct InitializePlatform<'info> {

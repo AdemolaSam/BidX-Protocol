@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::states::{AssetType, Auction, AuctionStatus, SellerState};
+use crate::errors::{ AuctionError};
 
 #[derive(Accounts)]
 pub struct CreateAuction<'info> {
@@ -19,7 +20,7 @@ pub struct CreateAuction<'info> {
         init,
         payer = seller,
         space = 8 + Auction::INIT_SPACE,
-        seeds = [b"auction".as_ref(), seller.key().as_ref(), auction.key().as_ref()], // is the auction key sufficient for unique auction creation or do I need to include the auction ID?
+        seeds = [b"auction".as_ref(), seller.key().as_ref(), &seller_state.auction_count.to_le_bytes()],
         bump
     )]
     pub auction: Account<'info, Auction>,
@@ -36,10 +37,24 @@ impl<'info> CreateAuction<'info> {
         reserved_price: u64,
         start_date: i64,
         end_date: i64,
-        asset_type: AssetType
+        asset_type: AssetType,
+        bumps: & CreateAuctionBumps
     ) -> Result<()> {
-        // I NEED TO MAKE THE START AND END DATES OPTIONAL
-        // CHECKS
+        let seller_state = &self.seller_state;
+
+        //checks
+        require!(start_date > Clock::get()?.unix_timestamp, AuctionError::StartDateIsBehind);
+        require!(end_date > start_date, AuctionError::EndDateIsBehindStartDate);
+        require!(reserved_price > starting_bid, AuctionError::ReservedPriceTooLow);
+        
+        // first auction creation
+        if seller_state.auction_count == 0 {
+            seller_state.seller = self.seller.key();
+            seller_state.bump = bumps.seller_state;
+        }
+
+        self.seller_state.auction_count += 1;
+
         self.auction.set_inner({
             Auction {
                 seller: self.seller.key(),
@@ -53,6 +68,9 @@ impl<'info> CreateAuction<'info> {
                 item_vault: self.item_vault.key(),
                 nft_mint: self.nft_mint.key(),  
                 asset_type,
+                highest_bid: 0,
+                highest_bidder: Pubkey::default(),
+                bump: bumps.auction
             }
         });
         Ok(())

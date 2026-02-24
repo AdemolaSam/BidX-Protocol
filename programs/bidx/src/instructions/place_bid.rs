@@ -1,31 +1,108 @@
 use anchor_lang::prelude::*;
 
-use crate::states::{auction::Auction, bid::Bid};
+use crate::states::{AuctionStatus, auction::Auction, bid::Bid};
+use crate::errors::{BidError};
+
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
+};
 
 #[derive(Accounts)]
 pub struct PlaceBid<'info> {
     #[account(mut)]
     pub bidder: Signer<'info>,
+    
     #[account(
         init_if_needed,
         payer = bidder,
         space = 8 + Bid::INIT_SPACE,
-        seeds = [b"bid".as_ref(), bidder.key().as_ref(), auction.key().as_ref()],
+        seeds = [b"bid", bidder.key().as_ref(), auction.key().as_ref()],
         bump
     )]
     pub bid: Account<'info, Bid>,
-    pub token_mint: Account<'info, Mint>, // maybe I need to add an ATA for the token
+    
+    #[account(mut)]  // ← Add
     pub auction: Account<'info, Auction>,
+    
+    #[account(mut)]
+    pub bidder_token_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        init_if_needed,
+        payer = bidder,
+        associated_token::mint = token_mint,
+        associated_token::authority = bid,
+    )]
+    pub escrow_vault: Account<'info, TokenAccount>,
+    
+    pub token_mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> PlaceBid<'info> {
-    pub fn place_bid(&mut self, amount: u64) -> Result<()> {
-        //CHECKS
-        // - is auction open
-        // - has the bidder placed a bid before
-        // - does the bidder have enough tokens
-        //
+    pub fn place_bid(&mut self, amount: u64, bumps: &PlaceBidBumps) -> Result<()> {
+        // Validations
+        require!(
+            self.auction.auction_status == AuctionStatus::Active,
+            BidError::AuctionNotAvailable
+        );
+        require!(
+            self.token_mint.key() == self.auction.accepted_token,
+            BidError::WrongToken
+        );
+        
+        // Check if increasing existing bid or new bid
+        if self.bid.bidder != Pubkey::default() {
+            // Increasing existing bid
+            let new_total = self.bid.amount + amount;
+            require!(
+                new_total > self.auction.highest_bid,
+                BidError::BidTooLow
+            );
+            
+            self.bid.amount = new_total;
+            self.bid.time_stamp = Clock::get()?.unix_timestamp;
+        } else {
+            // First bid
+            require!(
+                amount > self.auction.highest_bid,
+                BidError::BidTooLow
+            );
+            
+            self.bid.set_inner(Bid {
+                amount,
+                auction: self.auction.key(),
+                bidder: self.bidder.key(),
+                is_active: true,
+                is_winner: false,
+                time_stamp: Clock::get()?.unix_timestamp,
+                token_mint: self.token_mint.key(),
+                bump: bumps.bid,
+            });
+        }
+        
+        // Transfer tokens to escrow
+        transfer_checked(
+            CpiContext::new(
+                self.token_program.to_account_info(),
+                TransferChecked {
+                    from: self.bidder_token_account.to_account_info(),
+                    to: self.escrow_vault.to_account_info(),
+                    mint: self.token_mint.to_account_info(),
+                    authority: self.bidder.to_account_info(),
+                },
+            ),
+            amount,
+            self.token_mint.decimals,
+        )?;
+        
+        // Update auction state
+        self.auction.highest_bid = self.bid.amount;
+        self.auction.highest_bidder = self.bidder.key();
+        
         Ok(())
     }
 }

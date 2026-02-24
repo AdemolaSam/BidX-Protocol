@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 
 use crate::states::AuthenticatorsRegistry;
+use crate::errors::{AuctionAuthError, ConfigError};
 
 #[derive(Accounts)]
-pub struct RegisterAuthenticator<'info> {
+pub struct RegisterAuthenticators<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
@@ -14,12 +15,36 @@ pub struct RegisterAuthenticator<'info> {
     pub registry: Account<'info, AuthenticatorsRegistry>,
 }
 
-impl<'info> RegisterAuthenticator<'info> {
-    pub fn register_authenticator(&mut self, authenticator: Pubkey) -> Result<()> {
-        //CHECKS
-        // is authenticator already registered?
-        // is the authenticator a valid keypair?
-        // is the authenticator an admin (if yes decline)
+impl<'info> RegisterAuthenticators<'info> {
+    pub fn register_authenticators(&mut self, authenticators: Vec<Pubkey>) -> Result<()> {
+        // ensure caller is admin
+        require!(
+            self.admin.key() == self.registry.admin.key(),
+            ConfigError::ExclusiveToAdmin
+        );
+
+        for authenticator in authenticators {
+
+            //check if authenticator key is valid/not null
+            require!(
+                authenticator != Pubkey::default(),
+                AuctionAuthError::InvalidKey
+            );
+
+            require!(
+                !self.registry.authenticators.contains(&authenticator),
+                AuctionError::AlreadyRegistered
+            );
+
+            require!(
+                self.admin.key() != authenticator,
+                ConfigError::AdminCannotbeAuthenticator
+            );
+        
+            self.registry.authenticators.push(authenticator);
+            
+        }
+        
         Ok(())
     }
 }
