@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::states::{AssetType, Auction, AuctionStatus, SellerState};
+use crate::states::{AssetType, Auction, AuctionStatus, Authentication, SellerState, AuthStatus};
 use crate::errors::{ AuctionError};
 
 #[derive(Accounts)]
@@ -26,6 +26,14 @@ pub struct CreateAuction<'info> {
     pub auction: Account<'info, Auction>,
     pub nft_mint: Account<'info, Mint>,
     pub item_vault: Account<'info, TokenAccount>,
+    #[account(
+        init,
+        payer = seller,
+        space = 8 + Authentication::INIT_SPACE,
+        seeds = [b"authentication", auction.key().as_ref()],
+        bump
+    )]
+    pub authentication: Account<'info, Authentication>,
     pub system_program: Program<'info, System>,
 }
 
@@ -38,7 +46,8 @@ impl<'info> CreateAuction<'info> {
         start_date: i64,
         end_date: i64,
         asset_type: AssetType,
-        bumps: & CreateAuctionBumps
+        bumps: & CreateAuctionBumps,
+        document_hash: Option<String>
     ) -> Result<()> {
         let seller_state = &self.seller_state;
 
@@ -55,6 +64,19 @@ impl<'info> CreateAuction<'info> {
 
         self.seller_state.auction_count += 1;
 
+        if asset_type == AssetType::PhysicalRWA {
+            self.authentication.auction = auction.key();
+            self.authentication.seller = seller.key();
+            self.authentication.metadata_hash = document_hash.unwrap();  // Seller provides
+            self.authentication.auth_status = AuthStatus::Pending;
+        }
+
+        let auth_status =  if asset_type == AssetType::DigitalNFT{
+            AuthStatus::NotRequired;
+        } else {
+            AuthStatus::Pending;
+        };
+
         self.auction.set_inner({
             Auction {
                 seller: self.seller.key(),
@@ -64,7 +86,7 @@ impl<'info> CreateAuction<'info> {
                 start_date,
                 end_date,
                 auction_status: AuctionStatus::Pending,
-                auth_status: AuctionStatus::Pending, //IF NFT "NOTREQUIRED"
+                auth_status,
                 item_vault: self.item_vault.key(),
                 nft_mint: self.nft_mint.key(),  
                 asset_type,

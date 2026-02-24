@@ -10,7 +10,7 @@ declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 pub mod bidx {
 
     use crate::{instructions::{
-        CreateAuction, CreateAuctionBumps, FreezeAuctions, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticator, RemoveAuthenticator, UpdateAuthentication
+        CreateAuction, CreateAuctionBumps, FreezeAuctions, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticators, RemoveAuthenticator, UpdateAuthentication
     }, states::AssetType};
 
     use super::*;
@@ -21,8 +21,9 @@ pub mod bidx {
         min_auction_duration: i64,
         max_auction_duration: i64,
         authenticators: Vec<Pubkey>,
+        bumps: InitializePlatformBumps
     ) -> Result<()> {
-        ctx.accounts.initialize_platform(platform_fee_bps, min_auction_duration, max_auction_duration, authenticators, &InitializePlatformBumps)?;
+        ctx.accounts.initialize_platform(platform_fee_bps, min_auction_duration, max_auction_duration, authenticators, &bumps)?;
         Ok(())
     }
 
@@ -56,11 +57,6 @@ pub mod bidx {
         authenticator: Pubkey,
     ) -> Result<()> {
         ctx.accounts.remove_authenticator(authenticator)?;
-        Ok(())
-    }
-
-    pub fn update_authentication(ctx: Context<UpdateAuthentication>) -> Result<()> {
-        ctx.accounts.update_authentication()?;
         Ok(())
     }
 

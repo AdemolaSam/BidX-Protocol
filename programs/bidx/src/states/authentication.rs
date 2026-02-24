@@ -4,7 +4,7 @@ use anchor_lang::prelude::{
 };
 
 #[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize)]
-enum AuthStatus {
+pub enum AuthStatus {
     NotRequired,
     Pending,
     Verified,
@@ -14,7 +14,7 @@ enum AuthStatus {
 #[account]
 #[derive(InitSpace)]
 pub struct Authentication {
-    pub auction_id: Pubkey,
+    pub auction: Pubkey,
     pub auth_status: AuthStatus,
     pub authenticator: Pubkey,
     pub seller: Pubkey,
@@ -22,6 +22,7 @@ pub struct Authentication {
     pub metadata_hash: String, // IPFS hash containig item documentation from seller
     #[max_len(300)]
     pub report_hash: String, // IPFS hash containing item verification report from seller
+    pub uploaded_at: i64, // report hash upload timestamp
     pub verified_at: i64,
     pub fee_amount: u64,
     pub fee_paid: bool,

@@ -14,7 +14,7 @@ pub enum AuctionStatus {
     Failed,
 }
 
-#[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize, PartialEq)]
 pub enum AssetType {
     DigitalNFT,
     PhysicalRWA
