@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 mod instructions;
 mod states;
 mod errors;
+mod events;
 
 declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 

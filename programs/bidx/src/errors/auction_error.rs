@@ -11,4 +11,22 @@ pub enum AuctionError {
 
     #[msg("End Date cannot be behind start date")]
     EndDateIsBehindStartDate,
+
+    #[msg("Wrong Token")]
+    WrongToken,
+
+    #[msg("Invalid treasury token")]
+    InvalidTreasury,
+
+    #[msg("Auction not ended")]
+    AuctionNotEnded,
+
+    #[msg("Not Winner")]
+    NotWinner,
+
+    #[msg("Reserve not met")]
+    ReserveNotMet,
+
+    #[msg("Bid not active")]
+    BidNotActive,
 }

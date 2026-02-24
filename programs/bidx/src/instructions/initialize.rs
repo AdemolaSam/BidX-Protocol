@@ -51,6 +51,7 @@ impl<'info> InitializePlatform<'info> {
     pub fn initialize_platform(
         &mut self,
         platform_fee_bps: u16,
+        auth_fee_bps: u16,
         min_auction_duration: i64,
         max_auction_duration: i64,
         authenticators: Vec<Pubkey>,
@@ -63,6 +64,7 @@ impl<'info> InitializePlatform<'info> {
                 max_auction_duration,
                 is_paused: false,
                 platform_fee_bps,
+                auth_fee_bps,
                 treasury_sol: self.treasury_sol.key(),
                 treasury_usdc: self.treasury_usdc.key(),
                 bump: bumps.platform_config

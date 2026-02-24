@@ -7,6 +7,7 @@ pub mod remove_authenticator;
 pub mod upload_auth_report;
 pub mod attest_authentication;
 pub mod update_platform_config;
+pub mod settle;
 
 pub use create_auction::*;
 pub use freeze_auctions::*;
@@ -17,4 +18,6 @@ pub use remove_authenticator::*;
 pub use upload_auth_report::*;
 pub use attest_authentication::*;
 pub use update_platform_config::*;
+pub use settle::*;
+
 

@@ -26,3 +26,7 @@ _Requirements_
 ## REMOVE AUTHENTICATOR
 
 ** Warning - Check if authenticator is assigned to auctions before removal. Else, Auctions get stuck in "Pending" state unless Seller cancels and relist them **
+
+## AUTHENTICATION
+
+NOTE: authentication settlement is dependent on the success of the auction. for every successful Physical RWA auction that involves an authenticator, a fee set by the admin will be deducted at settlement and paid to the authenticator. THIS IS JUST FOR POC - WILL BE UPDATED LATER

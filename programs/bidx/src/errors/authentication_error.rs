@@ -16,5 +16,7 @@ pub enum AuctionAuthError {
     #[msg("Authenticator already registered")]
     AlreadyRegistered,
     #[msg("Authentication report not uploaded")]
-    ReportNotUploaded
+    ReportNotUploaded,
+    #[msg("Invalid Authentication")]
+    InvalidAuthentication
 }

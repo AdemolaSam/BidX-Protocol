@@ -20,15 +20,22 @@ impl <'info> UpdatePlatformConfig<'info> {
     pub fn update_platform_config(
         &mut self,
         platform_fee_bps: Option<u16>,
+        auth_fee_bps: Option<u16>,
         min_auction_duration: Option<i64>,
         max_auction_duration: Option<i64>,
     ) -> Result<()>{
         let new_fee_bps = platform_fee_bps.unwrap_or(self.platform_config.platform_fee_bps);
+        let new_auth_fee_bps = auth_fee_bps.unwrap_or(self.platform_config.auth_fee_bps);
         let new_min_duration = min_auction_duration.unwrap_or(self.platform_config.min_auction_duration);
         let new_max_duration = max_auction_duration.unwrap_or(self.platform_config.max_auction_duration);
 
         require!(
             new_fee_bps > 0,
+            ConfigError::FeeTooLow
+        );
+
+        require!(
+            new_auth_fee_bps > 0,
             ConfigError::FeeTooLow
         );
 
@@ -44,6 +51,9 @@ impl <'info> UpdatePlatformConfig<'info> {
 
         if new_fee_bps != self.platform_config.platform_fee_bps {
             self.platform_config.platform_fee_bps = new_fee_bps;
+        };
+        if new_auth_fee_bps != self.platform_config.auth_fee_bps {
+            self.platform_config.auth_fee_bps = new_auth_fee_bps
         };
         if new_min_durationn != self.platform_config.min_auction_duration {
             self.platform_config.min_auction_duration = new_min_duration
