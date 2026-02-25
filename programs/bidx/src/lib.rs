@@ -22,9 +22,17 @@ pub mod bidx {
         min_auction_duration: i64,
         max_auction_duration: i64,
         authenticators: Vec<Pubkey>,
+        auth_fee_bps: u16,
         bumps: InitializePlatformBumps
     ) -> Result<()> {
-        ctx.accounts.initialize_platform(platform_fee_bps, min_auction_duration, max_auction_duration, authenticators, &bumps)?;
+        ctx.accounts.initialize_platform(
+            platform_fee_bps,
+            auth_fee_bps,
+            min_auction_duration,
+            max_auction_duration,
+            authenticators,
+            &InitializePlatformBumps
+        )?;
         Ok(())
     }
 
@@ -35,9 +43,19 @@ pub mod bidx {
         reserved_price: u64,
         start_date: i64,
         end_date: i64,
+        document_hash: Option<String>,
         asset_type: AssetType,
     ) -> Result<()> {
-        ctx.accounts.create(accepted_token, starting_bid, reserved_bid, start_date, end_date, asset_type, &CreateAuctionBumps)?;
+        ctx.accounts.create(
+            accepted_token,
+            starting_bid,
+            reserved_bid,
+            start_date,
+            end_date,
+            asset_type,
+            &CreateAuctionBumps,
+            document_hash,
+        )?;
         Ok(())
     }
 

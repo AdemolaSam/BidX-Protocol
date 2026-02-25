@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::PlatformConfigUpdated;
 use crate::states::PlatformConfig;
 use crate::errors::ConfigError;
 
@@ -49,20 +50,31 @@ impl <'info> UpdatePlatformConfig<'info> {
             ConfigError::DurationNotRealistic
         );
 
+        let updated_fields: Vec<String> = vec![];
+
         if new_fee_bps != self.platform_config.platform_fee_bps {
             self.platform_config.platform_fee_bps = new_fee_bps;
+            updated_fields.push(String::from("platform_fee_bps"));
         };
         if new_auth_fee_bps != self.platform_config.auth_fee_bps {
-            self.platform_config.auth_fee_bps = new_auth_fee_bps
+            self.platform_config.auth_fee_bps = new_auth_fee_bps;
+            updated_fields.push(String::from("auth_fee_bps"))
         };
         if new_min_durationn != self.platform_config.min_auction_duration {
-            self.platform_config.min_auction_duration = new_min_duration
+            self.platform_config.min_auction_duration = new_min_duration;
+            updated_fields.push(String::from("min_auction_duration"))
         };
         if new_max_duration != self.platform_config.max_auction_duration {
-            self.platform_config.max_auction_duration = new_max_duration
+            self.platform_config.max_auction_duration = new_max_duration;
+            updated_fields.push(String::from("max_auction_duration"));
         };
 
-        // emit!("Platform Config Updated");
+        emit!(
+            PlatformConfigUpdated {
+                fields: updated_fields,
+                timestamp: Clock::get()?.unix_timestamp,
+            }
+        );
 
         Ok(())
     }

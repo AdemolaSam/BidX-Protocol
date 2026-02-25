@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::states::{AuthenticatorsRegistry, PlatformConfig};
+use crate::{events::PlatformInitialized, states::{AuthenticatorsRegistry, PlatformConfig}};
 
 #[derive(Accounts)]
 pub struct InitializePlatform<'info> {
@@ -76,6 +76,12 @@ impl<'info> InitializePlatform<'info> {
                 authenticators,
                 bump: bumps.authenticators_registry
             }
+        });
+
+        emit!(PlatformInitialized {
+            message: String::from("Platform Initialized"),
+            admin: self.admin.key(),
+            total_authenticators: self.authenticators_registry.authenticators.len(),  
         });
 
         Ok(())

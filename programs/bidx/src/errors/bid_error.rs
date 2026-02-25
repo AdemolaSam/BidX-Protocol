@@ -12,6 +12,9 @@ pub enum BidError {
     BidTooLow,
 
     #[msg("Wrong token type")]
-    WrongToken
+    WrongToken,
+
+    #[msg("Withdrawal disabled. You are currently winnning")]
+    StillWinning,
 }
 

@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::AuthenticatorRemovedFromPlatform;
 use crate::states::AuthenticatorsRegistry;
 use crate::errors::ConfigError;
 
@@ -36,6 +37,14 @@ impl<'info> RemoveAuthenticator<'info> {
         let auth_index = self.registry.authenticators.iter().position(|& el| el == authenticator).unwrap();
 
         self.registry.authenticators.swap_remove(auth_index);
+
+        emit!(
+            AuthenticatorRemovedFromPlatform {
+                authenticator,
+                timestamp: Clock::get()?.unix_timestamp
+            }
+        );
+
         Ok(())
     }
 }

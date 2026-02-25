@@ -18,5 +18,7 @@ pub enum AuctionAuthError {
     #[msg("Authentication report not uploaded")]
     ReportNotUploaded,
     #[msg("Invalid Authentication")]
-    InvalidAuthentication
+    InvalidAuthentication,
+    #[msg("No authenticator available")]
+    NoAuthenticatorAvailable,
 }

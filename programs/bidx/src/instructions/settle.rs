@@ -163,7 +163,7 @@ impl<'info> SettleAuction <'info> {
             b"auction",
             self.seller.key().as_ref(),
             &nonce.to_le_bytes(),
-            [&auction.bump]
+            &[auction.bump]
         ];
 
         let auction_signer_seeds = &[&auction_seeds[..]];

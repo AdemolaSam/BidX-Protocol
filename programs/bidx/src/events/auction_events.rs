@@ -13,9 +13,16 @@ pub struct AuctionSettled {
 }
 
 #[event]
-pub struct AuctionCreatedEvent {
+pub struct AuctionCreated {
     pub auction: Pubkey,
     pub asset_type: AssetType,
     pub seller: Pubkey,
     pub timestamp: i64,
+}
+
+#[event]
+pub struct BidWithdrawn {
+    pub auction: Pubkey,
+    pub bidder: Pubkey,
+    pub ammount: u64
 }

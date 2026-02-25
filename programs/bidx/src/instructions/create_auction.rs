@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
-use crate::states::{AssetType, Auction, AuctionStatus, Authentication, SellerState, AuthStatus};
+use crate::events::AuctionCreated;
+use crate::states::{AssetType, Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry, SellerState};
 use crate::errors::{ AuctionError};
 
 #[derive(Accounts)]
@@ -34,6 +35,8 @@ pub struct CreateAuction<'info> {
         bump
     )]
     pub authentication: Account<'info, Authentication>,
+    #[account(mut)]
+    pub registry: Account<'info, AuthenticatorsRegistry>,
     pub system_program: Program<'info, System>,
 }
 
@@ -49,7 +52,7 @@ impl<'info> CreateAuction<'info> {
         bumps: & CreateAuctionBumps,
         document_hash: Option<String>
     ) -> Result<()> {
-        let seller_state = &self.seller_state;
+        let seller_state = &mut self.seller_state;
 
         //checks
         require!(start_date > Clock::get()?.unix_timestamp, AuctionError::StartDateIsBehind);
@@ -65,22 +68,44 @@ impl<'info> CreateAuction<'info> {
         self.seller_state.auction_count += 1;
 
         if asset_type == AssetType::PhysicalRWA {
+            //Assign authenticator (using round robin)
+            let registry = &mut self.registry;
+
+            require!(
+                !registry.authenticators.is_empty(),
+                AuctionAuthError::NoAuthenticartorAvailable
+            );
+
+            let authenticator = self.registry.authenticators[registry.next_index as usize];
+            //rotate to next authenticator
+            registry.next_index = (registry.next_index + 1) % (registry.authenticators.len() as u64);
+
+
+
             self.authentication.auction = auction.key();
-            self.authentication.seller = seller.key();
-            self.authentication.metadata_hash = document_hash.unwrap();  // Seller provides
+            self.authentication.authenticator = authenticator;
+            self.authentication.seller = self.seller.key();
+             self.authentication.auth_status = AuthStatus::Pending;
+            self.authentication.report_hash = String::new();
+            self.authentication.metadata_hash = document_hash.unwrap_or_default();  // Seller provides
             self.authentication.auth_status = AuthStatus::Pending;
+             self.authentication.uploaded_at = 0;
+            self.authentication.verified_at = 0;
+            self.authentication.fee_amount = 0;
+            self.authentication.fee_paid = false;
+            self.authentication.bump = bumps.authentication;
         }
 
         let auth_status =  if asset_type == AssetType::DigitalNFT{
-            AuthStatus::NotRequired;
+            AuthStatus::NotRequired
         } else {
-            AuthStatus::Pending;
+            AuthStatus::Pending
         };
 
         self.auction.set_inner({
             Auction {
                 seller: self.seller.key(),
-                accepted_token: accepted_token.key(),
+                accepted_token,
                 reserved_price,
                 starting_bid,
                 start_date,
@@ -95,6 +120,16 @@ impl<'info> CreateAuction<'info> {
                 bump: bumps.auction
             }
         });
+
+        emit!(
+            AuctionCreated {
+                auction: self.auction.key(),
+                asset_type: self.auction.asset_type,
+                seller: self.seller.key(),
+                timestamp: Clock::get()?.unix_timestamp
+            }
+        );
+
         Ok(())
     }
 }

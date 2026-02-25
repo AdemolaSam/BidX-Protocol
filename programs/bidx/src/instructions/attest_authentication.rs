@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::AuctionAuthError, states::{Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry}};
+use crate::{errors::AuctionAuthError, events::AuthenticationResolved, states::{Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry}};
 
 
 #[derive(Accounts)]
@@ -54,6 +54,15 @@ impl <'info> AttestAuthentication <'info> {
             self.auction.auction_status = AuctionStatus::Cancelled;
         }
         self.authentication.verified_at = Clock::get()?.unix_timestamp;
+
+        emit!(
+            AuthenticationResolved {
+                accepted: approved,
+                authentication: self.authentication.key(),
+                authenticator: self.authenticator.key(),
+                verified_at: self.authentication.verified_at,
+            }
+        );
 
         Ok(())
     }

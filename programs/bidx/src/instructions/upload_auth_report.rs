@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::AuthReportUploaded;
 use crate::states::{Auction, AuthStatus, Authentication, AuthenticatorsRegistry};
 use crate::errors::AuctionAuthError;
 
@@ -46,6 +47,16 @@ impl <'info> UploadAuthDocument<'info> {
         self.authentication.authenticator = self.authenticator.key();
         self.authentication.report_hash = report_hash;
         self.authentication.uploaded_at = Clock::get()?.unix_timestamp;
+
+        emit!(
+            AuthReportUploaded {
+                authentication: self.authentication.key(),
+                authenticator: self.authenticator.key(),
+                report_hash: self.authentication.report_hash,
+                uploaded_at: self.authentication.uploaded_at
+            }
+        );
+        
         Ok(())
     }
 }

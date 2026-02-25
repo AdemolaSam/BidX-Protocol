@@ -20,8 +20,28 @@ This is the process of listing auctions and making the available to the public a
 _Requirements_
 
 - Seller with Assets: Digital NFT or Physical Real world assets (e.g. wristwatches)
+- If physical asset, authentication is required. An authentication record is created and an authenticator is assigned programmatically using "round robin". See the authentication account:
 
-... to be continued
+  ```#[account]
+  #[derive(InitSpace)]
+  pub struct Authentication {
+      pub auction: Pubkey,
+      pub auth_status: AuthStatus,
+      pub authenticator: Pubkey,
+      pub seller: Pubkey,
+      #[max_len(300)]
+      pub metadata_hash: String, // IPFS hash containig item documentation from seller
+      #[max_len(300)]
+      pub report_hash: String, // IPFS hash containing item verification report from seller
+      pub uploaded_at: i64, // report hash upload timestamp
+      pub verified_at: i64,
+      pub fee_amount: u64,
+      pub fee_paid: bool,
+      pub bump: u8,
+  }
+  ```
+
+  ... to be continued
 
 ## REMOVE AUTHENTICATOR
 

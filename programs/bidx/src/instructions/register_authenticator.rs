@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::AuthenticatorsAddedToPlatform;
 use crate::states::AuthenticatorsRegistry;
 use crate::errors::{AuctionAuthError, ConfigError};
 
@@ -44,6 +45,13 @@ impl<'info> RegisterAuthenticators<'info> {
             self.registry.authenticators.push(authenticator);
             
         }
+
+        emit!(
+            AuthenticatorsAddedToPlatform {
+                total_added: authenticators.len(),
+                timestamp: Clock::get()?.unix_timestamp
+            }
+        );
         
         Ok(())
     }

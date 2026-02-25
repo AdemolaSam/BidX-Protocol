@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::BidPlaced;
 use crate::states::{AuctionStatus, auction::Auction, bid::Bid};
 use crate::errors::{BidError};
 
@@ -22,10 +23,14 @@ pub struct PlaceBid<'info> {
     )]
     pub bid: Account<'info, Bid>,
     
-    #[account(mut)]  // ← Add
+    #[account(mut)]
     pub auction: Account<'info, Auction>,
     
-    #[account(mut)]
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = bidder,
+    )]
     pub bidder_token_account: Account<'info, TokenAccount>,
     
     #[account(
@@ -102,6 +107,15 @@ impl<'info> PlaceBid<'info> {
         // Update auction state
         self.auction.highest_bid = self.bid.amount;
         self.auction.highest_bidder = self.bidder.key();
+
+        emit!(
+            BidPlaced {
+                auction: self.auction.key(),
+                bid_amount: amount,
+                bidder: self.bidder.key(),
+                timestamp: Clock::get()?.unix_timestamp,
+            }
+        );
         
         Ok(())
     }
