@@ -9,7 +9,10 @@ use anchor_spl::{
 };
 
 use crate::{
-    errors::AuctionError, events::AuctionSettled, states::{AssetType, Auction, AuctionStatus, Authentication, Bid, PlatformConfig}
+    AuctionAuthError,
+    errors::AuctionError,
+    events::AuctionSettled,
+    states::{AssetType, Auction, AuctionStatus, Authentication, Bid, PlatformConfig},
 };
 
 
@@ -46,8 +49,7 @@ pub struct SettleAuction<'info> {
     #[account(
         mut,
         seeds = [b"authentication", auction.key().as_ref()],
-        bump,
-        constraint = authentication.auction == auction.key() @ AuctionAuthError::InvalidAuthentication,
+        bump
     )]
     pub authentication: Option<Box<Account<'info, Authentication>>>,
 
@@ -75,8 +77,7 @@ pub struct SettleAuction<'info> {
 
     //Platform treasury
     #[account(
-        mut,
-        constraint = treasury.key() ==platform_config.treasury_usdc || treasury.key() == platform_config.treasury_sol @AuctionError::InvalidTreasury
+        mut
     )]
     pub treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -84,10 +85,9 @@ pub struct SettleAuction<'info> {
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = authenticator,
-        constraint = authenticator_token_account.mint == token_mint.key() @AuctionError::WrongToken,
+        associated_token::authority = authenticator
     )]
-    pub authenticator_token_account: Box<Option<InterfaceAccount<'info, TokenAccount>>>,
+    pub authenticator_token_account: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     //NFT Accounts
     pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
@@ -141,6 +141,26 @@ impl<'info> SettleAuction <'info> {
             bid.is_active,
             AuctionError::BidNotActive
         );
+
+        require!(
+            self.treasury.key() == self.platform_config.treasury_usdc
+                || self.treasury.key() == self.platform_config.treasury_sol,
+            AuctionError::InvalidTreasury
+        );
+
+        if let Some(auth) = self.authentication.as_ref() {
+            require!(
+                auth.auction == auction.key(),
+                AuctionAuthError::InvalidAuthentication
+            );
+        }
+
+        if let Some(auth_token_account) = self.authenticator_token_account.as_ref() {
+            require!(
+                auth_token_account.mint == self.token_mint.key(),
+                AuctionError::WrongToken
+            );
+        }
 
         let winning_bid = auction.highest_bid;
         let plaform_fee_bps = self.platform_config.platform_fee_bps;
@@ -225,7 +245,7 @@ impl<'info> SettleAuction <'info> {
 
         // settle authenticator (if Physical Real World Asset)
         if auction.asset_type == AssetType::PhysicalRWA {
-            if let Some(auth_token_account) = &*self.authenticator_token_account {
+            if let Some(auth_token_account) = self.authenticator_token_account.as_ref() {
 
                 
                 transfer_checked(
@@ -297,4 +317,3 @@ impl<'info> SettleAuction <'info> {
 
     }
 }
-
