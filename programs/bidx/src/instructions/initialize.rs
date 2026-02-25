@@ -74,6 +74,7 @@ impl<'info> InitializePlatform<'info> {
             AuthenticatorsRegistry {
                 admin: self.admin.key(),
                 authenticators,
+                next_index: 0,
                 bump: bumps.authenticators_registry
             }
         });

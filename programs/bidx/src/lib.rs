@@ -10,8 +10,8 @@ declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 #[program]
 pub mod bidx {
 
-    use crate::{instructions::{
-        CreateAuction, CreateAuctionBumps, FreezeAuctions, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticators, RemoveAuthenticator, UpdateAuthentication
+    use crate::{instructions::{AttestAuthentication,
+        CreateAuction, CreateAuctionBumps, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticators, RemoveAuthenticator, SettleAuction, TogglePause, UpdateAuthentication, UpdatePlatformConfig, UploadAuthDocument, WithdrawBid
     }, states::AssetType};
 
     use super::*;
@@ -32,8 +32,7 @@ pub mod bidx {
             max_auction_duration,
             authenticators,
             &InitializePlatformBumps
-        )?;
-        Ok(())
+        )
     }
 
     pub fn creeate_auction(
@@ -55,13 +54,11 @@ pub mod bidx {
             asset_type,
             &CreateAuctionBumps,
             document_hash,
-        )?;
-        Ok(())
+        )
     }
 
     pub fn place_bid(ctx: Context<PlaceBid>, amount: u64, bumps: &PlaceBidBumps) -> Result<()> {
-        ctx.accounts.place_bid(amount, bumps)?;
-        Ok(())
+        ctx.accounts.place_bid(amount, bumps)
     }
 
     pub fn register_authenticators(
@@ -75,13 +72,46 @@ pub mod bidx {
         ctx: Context<RemoveAuthenticator>,
         authenticator: Pubkey,
     ) -> Result<()> {
-        ctx.accounts.remove_authenticator(authenticator)?;
-        Ok(())
+        ctx.accounts.remove_authenticator(authenticator)
     }
 
-    pub fn freeze_auctions(ctx: Context<FreezeAuctions>) -> Result<()> {
-        ctx.accounts.freeze_auctions()?;
-        Ok(())
+    pub fn upload_auth_report(
+        ctx: Context<UploadAuthDocument>,
+        report_hash: String,
+    ) -> Result<()>{
+        ctx.accounts.upload_auth_document(report_hash)
+    }
+
+    pub fn attest_authentication(
+        ctx: Context<AttestAuthentication>,
+        approved: bool) -> Result<()> {
+        ctx.accounts.attest_authentication(approved)
+    }
+
+    pub fn settle_auction(ctx: Context<SettleAuction>) -> Result<()> {
+        ctx.accounts.settle_auction()
+    }
+
+    pub fn withdraw_bid(ctx: Context<WithdrawBid>) -> Result<()> {
+        ctx.accounts.withdraw_bid()
+    }
+
+    pub fn toggle_pause_platform(ctx: Context<TogglePause>) -> Result<()>{
+        ctx.accounts.toggle_pause()
+    }
+
+    pub fn update_platform_config(ctx: Context<UpdatePlatformConfig>,
+        platform_fee_bps: Option<u16>,
+        auth_fee_bps: Option<u16>,
+        min_auction_duration: Option<i64>,
+        max_auction_duration: Option<i64>
+     ) -> Result<()> {
+        ctx.accounts.update_platform_config(
+            platform_fee_bps,
+            auth_fee_bps,
+            min_auction_duration,
+            max_auction_duration
+        )
     }
 }
 
