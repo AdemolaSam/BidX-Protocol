@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
+use anchor_spl::{associated_token::AssociatedToken, token::{Mint, Token, TokenAccount}};
 
-use crate::{events::PlatformInitialized, states::{AuthenticatorsRegistry, PlatformConfig}};
+use crate::{
+    events::PlatformInitialized,
+    states::{AuthenticatorsRegistry, PlatformConfig}
+};
 
 #[derive(Accounts)]
 pub struct InitializePlatform<'info> {
@@ -42,7 +46,7 @@ pub struct InitializePlatform<'info> {
     pub usdc_mint: Account<'info, Mint>,
     pub wsol_mint: Account<'info, Mint>,
 
-    pub token_program: Program<'info, TokenProgram>,
+    pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
@@ -82,7 +86,7 @@ impl<'info> InitializePlatform<'info> {
         emit!(PlatformInitialized {
             message: String::from("Platform Initialized"),
             admin: self.admin.key(),
-            total_authenticators: self.authenticators_registry.authenticators.len(),  
+            total_authenticators: self.authenticators_registry.authenticators.len() as u64,  
         });
 
         Ok(())

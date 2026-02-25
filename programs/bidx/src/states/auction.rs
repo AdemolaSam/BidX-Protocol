@@ -1,9 +1,14 @@
-use anchor_lang::prelude::{
-    borsh::{BorshDeserialize, BorshSerialize},
-    *,
-};
+use anchor_lang::prelude::*;
 
-#[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize, PartialEq)]
+use crate::states::AuthStatus;
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]  // ✅ Add these
+pub enum AssetType {
+    DigitalNFT,
+    PhysicalRWA,
+}
+
+#[derive(Debug, Clone, InitSpace, AnchorSerialize, AnchorDeserialize, PartialEq)]
 pub enum AuctionStatus {
     Pending,
     Paused,
@@ -12,12 +17,6 @@ pub enum AuctionStatus {
     Settled,
     Cancelled,
     Failed,
-}
-
-#[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize, PartialEq)]
-pub enum AssetType {
-    DigitalNFT,
-    PhysicalRWA
 }
 
 #[account]

@@ -1,5 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, TransferChecked, close_account, transfer_checked};
+use anchor_spl::{
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
+};
 
 use crate::events::BidWithdrawn;
 use crate::states::{Auction, AuctionStatus, Bid};
@@ -37,17 +42,20 @@ pub struct WithdrawBid <'info> {
         associated_token::mint = token_mint,
         associated_token::authority = bid,
     )]
-    pub escrow_vault: Account<'info, TokenAccount>,
+    pub escrow_vault: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
         associated_token::mint = token_mint,
         associated_token::authority = bidder,
     )]
-    pub bidder_token_account: Account<'info, TokenAccount>,
+    pub bidder_token_account: InterfaceAccount<'info, TokenAccount>,
 
-    pub token_mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token>,
+    #[account(
+        mint::token_program = token_program
+    )]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>
 }
 
@@ -90,7 +98,7 @@ impl <'info> WithdrawBid <'info> {
             cpi_ctx,
             self.bid.amount,
             self.token_mint.decimals
-        );
+        )?;
 
         //Close escrow account
         close_account(

@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::ConfigError, events::PlatformPauseToggled, states::PlatformConfig};
+use crate::{
+    errors::ConfigError, 
+    events::PlatformPauseToggled, 
+    states::PlatformConfig
+};
 
 #[derive(Accounts)]
 pub struct TogglePause <'info> {

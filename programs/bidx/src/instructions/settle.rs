@@ -1,11 +1,15 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::{associated_token::AssociatedToken, token::{CloseAccount, Mint, TokenAccount, TransferChecked, close_account}};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
+};
 
 use crate::{
-    errors::AuctionError,
-    events::AuctionSettled,
-    states::{AssetType, Auction, AuctionStatus, Authentication, Bid, PlatformConfig}
+    errors::AuctionError, events::AuctionSettled, states::{AssetType, Auction, AuctionStatus, Authentication, Bid, PlatformConfig}
 };
 
 
@@ -29,7 +33,7 @@ pub struct SettleAuction<'info> {
         bump = auction.bump,
         has_one = seller
     )]
-    pub auction: Account<'info, Auction>,
+    pub auction: Box<Account<'info, Auction>>,
 
     #[account(
         mut,
@@ -37,7 +41,7 @@ pub struct SettleAuction<'info> {
         bump = bid.bump,
         has_one = auction
     )]
-    pub bid: Account<'info, Bid>,
+    pub bid: Box<Account<'info, Bid>>,
 
     #[account(
         mut,
@@ -45,68 +49,75 @@ pub struct SettleAuction<'info> {
         bump,
         constraint = authentication.auction == auction.key() @ AuctionAuthError::InvalidAuthentication,
     )]
-    pub authentication: Option<Account<'info, Authentication>>,
+    pub authentication: Option<Box<Account<'info, Authentication>>>,
 
     #[account(
         seeds = [b"config"],
         bump = platform_config.bump
     )]
-    pub platform_config: Account<'info, PlatformConfig>,
+    pub platform_config: Box<Account<'info, PlatformConfig>>,
 
     //escrow vault - where winner bid is stored
     #[account(
         mut,
         associated_token::mint = token_mint,
         associated_token::authority = bid,
+        associated_token::token_program = token_program
     )]
-    pub escrow_vault: Account<'info, TokenAccount>,
+    pub escrow_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     //seller's token account (receives funds here)
     #[account(
         mut,
         constraint = seller_token_account.mint == token_mint.key() @ AuctionError::WrongToken,
     )]
-    pub seller_token_account: Account<'info, TokenAccount>,
+    pub seller_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     //Platform treasury
     #[account(
         mut,
         constraint = treasury.key() ==platform_config.treasury_usdc || treasury.key() == platform_config.treasury_sol @AuctionError::InvalidTreasury
     )]
-    pub treasury: Account<'info, TokenAccount>,
+    pub treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
     //Authenticators token account (if physical asset)
     #[account(
         mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = authenticator,
         constraint = authenticator_token_account.mint == token_mint.key() @AuctionError::WrongToken,
     )]
-    pub authenticator_token_account: Option<Account<'info, TokenAccount>>,
+    pub authenticator_token_account: Box<Option<InterfaceAccount<'info, TokenAccount>>>,
 
     //NFT Accounts
-    pub nft_mint: Account<'info, Mint>,
+    pub nft_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         associated_token::mint = nft_mint,
-        associated_token::authority = auction
+        associated_token::authority = auction,
+        associated_token::token_program = token_program,
     )]
-    pub item_vault: Account<'info, TokenAccount>,
+    pub item_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         associated_token::mint = nft_mint,
         associated_token::authority = winner,
     )]
-    pub winner_nft_account: Account<'info, TokenAccount>,
+    pub winner_nft_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    pub token_mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token>,
+    #[account(
+        mint::token_program = token_program
+    )]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>
 }
 
 impl<'info> SettleAuction <'info> {
-    pub fn settle_auction(&mut self) -> Result<()> {
+    pub fn settle_auction(&mut self, nonce: u64) -> Result<()> {
         let auction = &mut self.auction;
         let bid = &self.bid;
 
@@ -147,7 +158,7 @@ impl<'info> SettleAuction <'info> {
         let mut auth_fee: u64 = 0;
 
         //if physical asset; deduct auth fee
-        if self.auction.asset_type == AssetType::PhysicalRWA {
+        if auction.asset_type == AssetType::PhysicalRWA {
             let auth_fee_bps = self.platform_config.auth_fee_bps;
             auth_fee = (winning_bid as u128)
                 .checked_mul(auth_fee_bps as u128)
@@ -159,19 +170,22 @@ impl<'info> SettleAuction <'info> {
         }
 
         //PDA SEEDS
+        let seller_key = self.seller.key();
         let auction_seeds = &[
             b"auction",
-            self.seller.key().as_ref(),
+            seller_key.as_ref(),
             &nonce.to_le_bytes(),
             &[auction.bump]
         ];
 
         let auction_signer_seeds = &[&auction_seeds[..]];
 
+        let winner_key = self.winner.key();
+        let auction_key = auction.key();
        let bid_seeds = &[
             b"bid",
-            self.winner.key().as_ref(),
-            auction.key().as_ref(),
+            winner_key.as_ref(),
+            auction_key.as_ref(),
             &[bid.bump],
         ];
 
@@ -191,7 +205,7 @@ impl<'info> SettleAuction <'info> {
             ),
             seller_amount,
             self.token_mint.decimals
-        );
+        )?;
 
         //settle platform (pay fee to treasury)
         transfer_checked(
@@ -207,12 +221,13 @@ impl<'info> SettleAuction <'info> {
             ),
             platform_fee,
             self.token_mint.decimals
-        );
+        )?;
 
         // settle authenticator (if Physical Real World Asset)
         if auction.asset_type == AssetType::PhysicalRWA {
-            if let Some(auth_token_account) = &self.authenticator_token_account {
+            if let Some(auth_token_account) = &*self.authenticator_token_account {
 
+                
                 transfer_checked(
                     CpiContext::new_with_signer(
                         self.token_program.to_account_info(),
@@ -226,14 +241,14 @@ impl<'info> SettleAuction <'info> {
                     ),
                     auth_fee,
                     self.token_mint.decimals
-                )
+                )?;
             }
 
             //update auth fee as paid
             if let Some(auth) = &mut self.authentication {
                 auth.fee_amount = auth_fee;
                 auth.fee_paid = true;
-            }
+            } else {}
         };
 
         // Transfer NFT to winner
@@ -244,16 +259,16 @@ impl<'info> SettleAuction <'info> {
                     from: self.item_vault.to_account_info(),
                     to: self.winner_nft_account.to_account_info(),
                     mint: self.nft_mint.to_account_info(),
-                    authority: self.auction.to_account_info()
+                    authority: auction.to_account_info()
                 },
                 auction_signer_seeds
             ),
             1,
             self.nft_mint.decimals,
-        );
+        )?;
 
         //close escrow vault for rent reclaim
-        close_acct_ctx = CpiContext::new_with_signer(
+        let close_acct_ctx = CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             CloseAccount {
                 account: self.escrow_vault.to_account_info(),
@@ -262,7 +277,7 @@ impl<'info> SettleAuction <'info> {
             }, 
             bid_signer_seeds
         );
-        close_account(close_acct_ctx);
+        close_account(close_acct_ctx)?;
 
         //update auction status
         auction.auction_status = AuctionStatus::Settled;

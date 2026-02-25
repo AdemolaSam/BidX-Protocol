@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::AuctionAuthError, events::AuthenticationResolved, states::{Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry}};
+use crate::{
+    errors::AuctionAuthError, 
+    events::AuthenticationResolved, 
+    states::{Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry}
+};
 
 
 #[derive(Accounts)]
@@ -8,6 +12,9 @@ use crate::{errors::AuctionAuthError, events::AuthenticationResolved, states::{A
 pub struct AttestAuthentication<'info> {
     #[account(mut)]
     pub authenticator: Signer<'info>,
+
+    ///CHECK: seller
+    pub seller: UncheckedAccount<'info>,
 
     #[account(
         seeds = [b"auction", seller.key().as_ref(), &nonce.to_le_bytes()],
@@ -22,6 +29,7 @@ pub struct AttestAuthentication<'info> {
         has_one = authenticator
     )]
     pub authentication: Account<'info, Authentication>,
+
     #[account(
         seeds = [b"authentication_registry"],
         bump
@@ -33,7 +41,7 @@ pub struct AttestAuthentication<'info> {
 impl <'info> AttestAuthentication <'info> {
     pub fn attest_authentication(&mut self, approved: bool) -> Result<()> {
         // validate authenticator
-        require(
+        require!(
             self.registry.authenticators.contains(&self.authenticator.key()),
             AuctionAuthError::AuthenticatorNotRecognized
         );

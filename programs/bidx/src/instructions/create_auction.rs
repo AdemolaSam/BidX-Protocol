@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{Mint, TokenAccount};
 
 use crate::events::AuctionCreated;
 use crate::states::{AssetType, Auction, AuctionStatus, AuthStatus, Authentication, AuthenticatorsRegistry, SellerState};
-use crate::errors::{ AuctionError};
+use crate::errors::{ AuctionAuthError, AuctionError};
 
 #[derive(Accounts)]
 pub struct CreateAuction<'info> {
@@ -25,8 +26,8 @@ pub struct CreateAuction<'info> {
         bump
     )]
     pub auction: Account<'info, Auction>,
-    pub nft_mint: Account<'info, Mint>,
-    pub item_vault: Account<'info, TokenAccount>,
+    pub nft_mint: InterfaceAccount<'info, Mint>,
+    pub item_vault: InterfaceAccount<'info, TokenAccount>,
     #[account(
         init,
         payer = seller,
@@ -73,16 +74,16 @@ impl<'info> CreateAuction<'info> {
 
             require!(
                 !registry.authenticators.is_empty(),
-                AuctionAuthError::NoAuthenticartorAvailable
+                AuctionAuthError::NoAuthenticatorAvailable
             );
 
-            let authenticator = self.registry.authenticators[registry.next_index as usize];
+            let authenticator = registry.authenticators[registry.next_index as usize];
             //rotate to next authenticator
             registry.next_index = (registry.next_index + 1) % (registry.authenticators.len() as u64);
 
 
 
-            self.authentication.auction = auction.key();
+            self.authentication.auction = self.auction.key();
             self.authentication.authenticator = authenticator;
             self.authentication.seller = self.seller.key();
              self.authentication.auth_status = AuthStatus::Pending;
@@ -124,7 +125,7 @@ impl<'info> CreateAuction<'info> {
         emit!(
             AuctionCreated {
                 auction: self.auction.key(),
-                asset_type: self.auction.asset_type,
+                asset_type: self.auction.asset_type.clone(),
                 seller: self.seller.key(),
                 timestamp: Clock::get()?.unix_timestamp
             }

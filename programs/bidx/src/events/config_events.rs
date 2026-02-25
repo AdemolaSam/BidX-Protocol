@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 pub struct PlatformInitialized {
     pub message: String,
     pub admin: Pubkey,
-    pub total_authenticators: usize
+    pub total_authenticators: u64
 }
 
 #[event]
@@ -22,7 +22,7 @@ pub struct PlatformPaused {
 
 #[event]
 pub struct AuthenticatorsAddedToPlatform {
-    pub total_added: usize,
+    pub total_added: u64,
     pub timestamp: i64,
 }
 

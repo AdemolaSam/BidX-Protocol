@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+
 use crate::events::AuthenticatorsAddedToPlatform;
 use crate::states::AuthenticatorsRegistry;
 use crate::errors::{AuctionAuthError, ConfigError};
@@ -23,32 +24,31 @@ impl<'info> RegisterAuthenticators<'info> {
             self.admin.key() == self.registry.admin.key(),
             ConfigError::ExclusiveToAdmin
         );
-
-        for authenticator in authenticators {
+        for authenticator in &authenticators {
 
             //check if authenticator key is valid/not null
             require!(
-                authenticator != Pubkey::default(),
+                *authenticator != Pubkey::default(),
                 AuctionAuthError::InvalidKey
             );
 
             require!(
                 !self.registry.authenticators.contains(&authenticator),
-                AuctionError::AlreadyRegistered
+                AuctionAuthError::AlreadyRegistered
             );
 
             require!(
-                self.admin.key() != authenticator,
+                self.admin.key() != *authenticator,
                 ConfigError::AdminCannotbeAuthenticator
             );
         
-            self.registry.authenticators.push(authenticator);
+            self.registry.authenticators.push(authenticator.clone());
             
         }
 
         emit!(
             AuthenticatorsAddedToPlatform {
-                total_added: authenticators.len(),
+                total_added: authenticators.len() as u64,
                 timestamp: Clock::get()?.unix_timestamp
             }
         );

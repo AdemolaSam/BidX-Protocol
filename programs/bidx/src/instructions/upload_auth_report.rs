@@ -7,7 +7,7 @@ use crate::errors::AuctionAuthError;
 
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
-pub struct UploadAuthDocument <'info> {
+pub struct UploadAuthReport <'info> {
     #[account(mut)]
     pub authenticator: Signer<'info>,
 
@@ -31,8 +31,8 @@ pub struct UploadAuthDocument <'info> {
     pub registry: Account<'info, AuthenticatorsRegistry>
 }
 
-impl <'info> UploadAuthDocument<'info> {
-    pub fn upload_auth_document(&mut self, report_hash: String) -> Result<()> {
+impl <'info> UploadAuthReport<'info> {
+    pub fn upload_auth_report(&mut self, report_hash: String) -> Result<()> {
         // validate authenticator is registered
         require!(
             self.registry.authenticators.contains(&self.authenticator.key()),
@@ -52,7 +52,7 @@ impl <'info> UploadAuthDocument<'info> {
             AuthReportUploaded {
                 authentication: self.authentication.key(),
                 authenticator: self.authenticator.key(),
-                report_hash: self.authentication.report_hash,
+                report_hash: self.authentication.report_hash.clone(),
                 uploaded_at: self.authentication.uploaded_at
             }
         );

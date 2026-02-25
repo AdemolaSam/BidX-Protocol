@@ -1,9 +1,6 @@
-use anchor_lang::prelude::{
-    borsh::{BorshDeserialize, BorshSerialize},
-    *,
-};
+use anchor_lang::prelude::*;
 
-#[derive(Debug, Clone, InitSpace, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, InitSpace, AnchorSerialize, AnchorDeserialize, PartialEq)]
 pub enum AuthStatus {
     NotRequired,
     Pending,

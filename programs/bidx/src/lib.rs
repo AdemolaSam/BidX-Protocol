@@ -1,18 +1,21 @@
 use anchor_lang::prelude::*;
 
-mod instructions;
-mod states;
-mod errors;
-mod events;
+pub mod instructions;
+pub mod states;
+pub mod errors;
+pub mod events;
+
+pub use instructions::*;
+pub use states::*;
+pub use events::*;
+pub use errors::*;
+
+
 
 declare_id!("2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm");
 
 #[program]
 pub mod bidx {
-
-    use crate::{instructions::{AttestAuthentication,
-        CreateAuction, CreateAuctionBumps, InitializePlatform, InitializePlatformBumps, PlaceBid, PlaceBidBumps, RegisterAuthenticators, RemoveAuthenticator, SettleAuction, TogglePause, UpdateAuthentication, UpdatePlatformConfig, UploadAuthDocument, WithdrawBid
-    }, states::AssetType};
 
     use super::*;
 
@@ -23,7 +26,6 @@ pub mod bidx {
         max_auction_duration: i64,
         authenticators: Vec<Pubkey>,
         auth_fee_bps: u16,
-        bumps: InitializePlatformBumps
     ) -> Result<()> {
         ctx.accounts.initialize_platform(
             platform_fee_bps,
@@ -31,11 +33,11 @@ pub mod bidx {
             min_auction_duration,
             max_auction_duration,
             authenticators,
-            &InitializePlatformBumps
+           &ctx.bumps
         )
     }
 
-    pub fn creeate_auction(
+    pub fn create_auction(
         ctx: Context<CreateAuction>,
         accepted_token: Pubkey,
         starting_bid: u64,
@@ -48,22 +50,22 @@ pub mod bidx {
         ctx.accounts.create(
             accepted_token,
             starting_bid,
-            reserved_bid,
+            reserved_price,
             start_date,
             end_date,
             asset_type,
-            &CreateAuctionBumps,
+            &ctx.bumps,
             document_hash,
         )
     }
 
-    pub fn place_bid(ctx: Context<PlaceBid>, amount: u64, bumps: &PlaceBidBumps) -> Result<()> {
-        ctx.accounts.place_bid(amount, bumps)
+    pub fn place_bid(ctx: Context<PlaceBid>, amount: u64) -> Result<()> {
+        ctx.accounts.place_bid(amount, &ctx.bumps)
     }
 
     pub fn register_authenticators(
         ctx: Context<RegisterAuthenticators>,
-        authenticators: vec<Pubkey>,
+        authenticators: Vec<Pubkey>,
     ) -> Result<()> {
         ctx.accounts.register_authenticators(authenticators)
     }
@@ -76,10 +78,10 @@ pub mod bidx {
     }
 
     pub fn upload_auth_report(
-        ctx: Context<UploadAuthDocument>,
+        ctx: Context<UploadAuthReport>,
         report_hash: String,
     ) -> Result<()>{
-        ctx.accounts.upload_auth_document(report_hash)
+        ctx.accounts.upload_auth_report(report_hash)
     }
 
     pub fn attest_authentication(
@@ -88,8 +90,8 @@ pub mod bidx {
         ctx.accounts.attest_authentication(approved)
     }
 
-    pub fn settle_auction(ctx: Context<SettleAuction>) -> Result<()> {
-        ctx.accounts.settle_auction()
+    pub fn settle_auction(ctx: Context<SettleAuction>, nonce:u64) -> Result<()> {
+        ctx.accounts.settle_auction(nonce)
     }
 
     pub fn withdraw_bid(ctx: Context<WithdrawBid>) -> Result<()> {

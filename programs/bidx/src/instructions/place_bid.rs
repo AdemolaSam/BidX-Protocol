@@ -6,7 +6,10 @@ use crate::errors::{BidError};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
+    token_interface::{
+        transfer_checked, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
 };
 
 #[derive(Accounts)]
@@ -30,19 +33,23 @@ pub struct PlaceBid<'info> {
         mut,
         associated_token::mint = token_mint,
         associated_token::authority = bidder,
+        associated_token::token_program = token_program
     )]
-    pub bidder_token_account: Account<'info, TokenAccount>,
+    pub bidder_token_account: InterfaceAccount<'info, TokenAccount>,
     
     #[account(
         init_if_needed,
         payer = bidder,
         associated_token::mint = token_mint,
         associated_token::authority = bid,
+        associated_token::token_program = token_program
     )]
-    pub escrow_vault: Account<'info, TokenAccount>,
-    
-    pub token_mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token>,
+    pub escrow_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        mint::token_program = token_program
+    )]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
