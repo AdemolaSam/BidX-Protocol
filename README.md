@@ -22,7 +22,8 @@ _Requirements_
 - Seller with Assets: Digital NFT or Physical Real world assets (e.g. wristwatches)
 - If physical asset, authentication is required. An authentication record is created and an authenticator is assigned programmatically using "round robin". See the authentication account:
 
-  ```#[account]
+  ```Rust
+  #[account]
   #[derive(InitSpace)]
   pub struct Authentication {
       pub auction: Pubkey,

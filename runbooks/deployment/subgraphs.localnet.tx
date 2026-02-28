@@ -1,0 +1,117 @@
+
+action "bidx_auction_created" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuctionCreated"
+    }
+}
+
+action "bidx_auction_settled" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuctionSettled"
+    }
+}
+
+action "bidx_auth_report_uploaded" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuthReportUploaded"
+    }
+}
+
+action "bidx_authentication_requested" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuthenticationRequested"
+    }
+}
+
+action "bidx_authentication_resolved" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuthenticationResolved"
+    }
+}
+
+action "bidx_authenticator_removed_from_platform" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuthenticatorRemovedFromPlatform"
+    }
+}
+
+action "bidx_authenticators_added_to_platform" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "AuthenticatorsAddedToPlatform"
+    }
+}
+
+action "bidx_bid_placed" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "BidPlaced"
+    }
+}
+
+action "bidx_bid_withdrawn" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "BidWithdrawn"
+    }
+}
+
+action "bidx_platform_config_updated" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "PlatformConfigUpdated"
+    }
+}
+
+action "bidx_platform_initialized" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "PlatformInitialized"
+    }
+}
+
+action "bidx_platform_pause_toggled" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "PlatformPauseToggled"
+    }
+}
+
+action "bidx_platform_paused" "svm::deploy_subgraph" {
+    program_id = action.deploy_bidx.program_id
+    program_idl = action.deploy_bidx.program_idl
+    block_height = 0 // action.deploy_bidx.block_height
+    event {
+        name = "PlatformPaused"
+    }
+}

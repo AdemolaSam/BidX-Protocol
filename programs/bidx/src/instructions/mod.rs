@@ -1,4 +1,5 @@
 pub mod create_auction;
+pub mod end_auction;
 pub mod initialize;
 pub mod place_bid;
 pub mod register_authenticator;
@@ -11,6 +12,7 @@ pub mod toggle_pause_platform;
 pub mod withdraw_bid;
 
 pub use create_auction::*;
+pub use end_auction::*;
 pub use initialize::*;
 pub use place_bid::*;
 pub use register_authenticator::*;
@@ -21,5 +23,3 @@ pub use update_platform_config::*;
 pub use settle::*;
 pub use toggle_pause_platform::*;
 pub use withdraw_bid::*;
-
-

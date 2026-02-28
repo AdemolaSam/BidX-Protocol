@@ -103,6 +103,12 @@ impl<'info> CreateAuction<'info> {
             AuthStatus::Pending
         };
 
+       let auction_status = if asset_type == AssetType::DigitalNFT {
+            AuctionStatus::Active
+        } else {
+            AuctionStatus::Pending
+        };
+
         self.auction.set_inner({
             Auction {
                 seller: self.seller.key(),
@@ -111,7 +117,7 @@ impl<'info> CreateAuction<'info> {
                 starting_bid,
                 start_date,
                 end_date,
-                auction_status: AuctionStatus::Pending,
+                auction_status: auction_status,
                 auth_status,
                 item_vault: self.item_vault.key(),
                 nft_mint: self.nft_mint.key(),  

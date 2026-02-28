@@ -63,6 +63,11 @@ pub mod bidx {
         ctx.accounts.place_bid(amount, &ctx.bumps)
     }
 
+    pub fn end_auction(ctx: Context<EndAuction>, nonce: u64) -> Result<()> {
+        let _ = nonce; // nonce used in account constraints
+        ctx.accounts.end_auction()
+    }
+
     pub fn register_authenticators(
         ctx: Context<RegisterAuthenticators>,
         authenticators: Vec<Pubkey>,
@@ -94,7 +99,8 @@ pub mod bidx {
         ctx.accounts.settle_auction(nonce)
     }
 
-    pub fn withdraw_bid(ctx: Context<WithdrawBid>) -> Result<()> {
+    pub fn withdraw_bid(ctx: Context<WithdrawBid>, nonce: u64) -> Result<()> { // NOTE: include nonce to satisfy WithdrawBid PDA seeds
+        let _ = nonce; // NOTE: nonce used in account constraints; keep arg to align client + IDL
         ctx.accounts.withdraw_bid()
     }
 
