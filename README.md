@@ -75,6 +75,21 @@ _Settings_
 - minimum auction duration (e.g. 1 hour)
 - maximum auction duration (eg. 10 days)
 
+Authenticators Registry
+
+```Rust
+  #[account]
+  #[derive(InitSpace)]
+  pub struct AuthenticatorsRegistry {
+      pub admin: Pubkey,
+      #[max_len(100)]
+      pub authenticators: Vec<Pubkey>,
+      pub next_index: u64, // for programmatically assigning authenticators to auctions that require physical verification and approval
+      pub bump: u8,
+  }
+
+```
+
 ### create_auction
 
 This is the process of listing auctions and making the available to the public after approval
@@ -102,9 +117,16 @@ _Requirements_
       pub fee_paid: bool,
       pub bump: u8,
   }
-  ```
 
-  ... to be continued
+  AUTHENTICATION STATUS
+  #[derive(Debug, Clone, InitSpace, AnchorSerialize, AnchorDeserialize, PartialEq)]
+  pub enum AuthStatus {
+    NotRequired, // Digital assets does not require authentication
+    Pending,
+    Verified,
+    Rejected,
+  }
+  ```
 
 ### register_authenticators & remove_authenticator
 
