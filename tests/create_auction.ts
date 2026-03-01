@@ -16,7 +16,7 @@ import {
 import { expect } from "chai";
 import { Bidx } from "../target/types/bidx";
 import {
-  airdrop,
+  fund,
   assertAnchorError,
   createNftMint,
   mintNftToSeller,
@@ -104,7 +104,7 @@ export function runCreateAuctionTests(getCtx: () => Ctx) {
     it("seller creates a DigitalNFT auction successfully", async () => {
       const { program, connection, platform } = getCtx();
       const seller = Keypair.generate();
-      await airdrop(connection, seller.publicKey);
+      await fund(connection, seller.publicKey);
 
       const { nftMint, sellerState, auction, authentication, itemVault } =
         await buildAuctionAccounts(program, connection, platform, seller);
@@ -163,7 +163,7 @@ export function runCreateAuctionTests(getCtx: () => Ctx) {
     it("auction start date cannot be behind end date", async () => {
       const { program, connection, platform } = getCtx();
       const seller = Keypair.generate();
-      await airdrop(connection, seller.publicKey);
+      await fund(connection, seller.publicKey);
 
       const { nftMint, sellerState, auction, authentication, itemVault } =
         await buildAuctionAccounts(program, connection, platform, seller);
@@ -200,7 +200,7 @@ export function runCreateAuctionTests(getCtx: () => Ctx) {
     it("end date before start_date => EndDateIsBehindStartDate", async () => {
       const { program, connection, platform } = getCtx();
       const seller = Keypair.generate();
-      await airdrop(connection, seller.publicKey);
+      await fund(connection, seller.publicKey);
 
       const { nftMint, sellerState, auction, authentication, itemVault } =
         await buildAuctionAccounts(program, connection, platform, seller);
@@ -237,7 +237,7 @@ export function runCreateAuctionTests(getCtx: () => Ctx) {
     it("ensuures reserved_price is less than or equal starting_bid", async () => {
       const { program, connection, platform } = getCtx();
       const seller = Keypair.generate();
-      await airdrop(connection, seller.publicKey);
+      await fund(connection, seller.publicKey);
 
       const { nftMint, sellerState, auction, authentication, itemVault } =
         await buildAuctionAccounts(program, connection, platform, seller);

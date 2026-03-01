@@ -10,7 +10,7 @@ pub struct UpdatePlatformConfig<'info> {
     pub admin: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"config".as_ref()],
+        seeds = [b"config".as_ref(), platform_config.admin.as_ref()],
         bump,
         has_one = admin
     )]

@@ -1,9 +1,9 @@
 /**
  * bidx.test.ts — single entry point
  *
- * Platform PDAs (config, authenticators_registry) are global singletons.
+ * Platform PDAs (config, authenticators_registry) are derived from admin.
  * We initialize ONCE here in the root before() and pass the context down
- * to every suite. This avoids "already in use" errors across test files.
+ * to every suite.
  *
  * Run with:
  *   anchor test
@@ -40,4 +40,26 @@ describe("bidx", () => {
   runCreateAuctionTests(() => ({ program, connection, platform }));
   runPlaceBidTests(() => ({ program, connection, platform }));
   runSettleAndWithdrawTests(() => ({ program, connection, platform }));
+
+  after("close platform (reclaim rent)", async () => {
+    if (!platform) return;
+    await program.methods
+      .closePlatform()
+      .accounts({
+        admin: platform.admin.publicKey,
+        platformConfig: platform.platformConfig,
+        authenticatorsRegistry: platform.authenticatorsRegistry,
+        treasuryUsdc: platform.treasuryUsdc,
+        adminUsdcAta: await anchor.utils.token.associatedAddress({
+          mint: platform.usdcMint,
+          owner: platform.admin.publicKey,
+        }),
+        usdcMint: platform.usdcMint,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([platform.admin])
+      .rpc();
+  });
 });

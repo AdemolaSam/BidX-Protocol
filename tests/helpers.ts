@@ -1,5 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BN } from "@coral-xyz/anchor";
+import * as fs from "fs";
+import * as path from "path";
 import {
   Keypair,
   PublicKey,
@@ -20,31 +22,33 @@ import {
 import { Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { Bidx } from "../target/types/bidx";
 
-// ─────────────────────────────────────────────
 // CONSTANTS
-// ─────────────────────────────────────────────
 export const PLATFORM_FEE_BPS = 250; // 2.5%
 export const AUTH_FEE_BPS = 100; // 1%
 export const MIN_AUCTION_DURATION = new BN(60); // 1 min (seconds)
 export const MAX_AUCTION_DURATION = new BN(60 * 60 * 24 * 7); // 1 week
 export const TEST_AUCTION_START_DELAY_SECS = 1;
 export const TEST_AUCTION_DURATION_SECS = 2;
+export const DEVNET_AUCTION_START_DELAY_SECS = 20;
+export const DEVNET_AUCTION_DURATION_SECS = 60;
 
-// ─────────────────────────────────────────────
 // PDA DERIVATIONS
-// ─────────────────────────────────────────────
-
 export function getPlatformConfigPDA(
   programId: PublicKey,
+  admin: PublicKey,
 ): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("config"), admin.toBuffer()],
+    programId,
+  );
 }
 
 export function getAuthenticatorsRegistryPDA(
   programId: PublicKey,
+  admin: PublicKey,
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("authenticators_registry")],
+    [Buffer.from("authenticators_registry"), admin.toBuffer()],
     programId,
   );
 }
@@ -93,18 +97,46 @@ export function getBidPDA(
   );
 }
 
-// ─────────────────────────────────────────────
 // AIRDROP HELPER
-// ─────────────────────────────────────────────
-
 export async function airdrop(
   connection: anchor.web3.Connection,
   wallet: PublicKey,
-  sol: number = 10,
+  sol: number = 0.05,
 ) {
-  const sig = await connection.requestAirdrop(wallet, sol * LAMPORTS_PER_SOL);
-  const latestBlockhash = await connection.getLatestBlockhash();
-  await connection.confirmTransaction({ signature: sig, ...latestBlockhash });
+  const endpoint = connection.rpcEndpoint ?? "";
+  const isLocalnet =
+    endpoint.includes("localhost") || endpoint.includes("127.0.0.1");
+  if (isLocalnet) {
+    const sig = await connection.requestAirdrop(wallet, sol * LAMPORTS_PER_SOL);
+    const latestBlockhash = await connection.getLatestBlockhash();
+    await connection.confirmTransaction({ signature: sig, ...latestBlockhash });
+    return;
+  }
+
+  const provider = anchor.AnchorProvider.env();
+  const payer = (provider.wallet as anchor.Wallet).payer as Keypair;
+  const lamports = sol * LAMPORTS_PER_SOL;
+  const tx = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: wallet,
+      lamports,
+    }),
+  );
+  await sendAndConfirmTransaction(connection, tx, [payer]);
+}
+
+export function isDevnet(connection: anchor.web3.Connection): boolean {
+  const endpoint = connection.rpcEndpoint ?? "";
+  return endpoint.includes("devnet");
+}
+
+export async function fund(
+  connection: anchor.web3.Connection,
+  wallet: PublicKey,
+  sol: number = 0.1,
+) {
+  await airdrop(connection, wallet, sol);
 }
 
 // TOKEN HELPERS
@@ -238,16 +270,20 @@ export async function setupPlatform(
   authenticators: PublicKey[] = [],
 ): Promise<PlatformContext> {
   const admin = Keypair.generate();
-  await airdrop(connection, admin.publicKey);
+  await airdrop(connection, admin.publicKey, 0.5);
+
+  const [platformConfig] = getPlatformConfigPDA(
+    program.programId,
+    admin.publicKey,
+  );
+  const [authenticatorsRegistry] = getAuthenticatorsRegistryPDA(
+    program.programId,
+    admin.publicKey,
+  );
 
   // Create USDC nd wSOL mints
   const usdcMint = await createTokenMint(connection, admin, 6);
   const wsolMint = await createTokenMint(connection, admin, 9);
-
-  const [platformConfig] = getPlatformConfigPDA(program.programId);
-  const [authenticatorsRegistry] = getAuthenticatorsRegistryPDA(
-    program.programId,
-  );
 
   const treasuryUsdc = getAssociatedTokenAddressSync(
     usdcMint,
@@ -382,8 +418,15 @@ export async function setupDigitalNftAuction(
   await sendAndConfirmTransaction(connection, tx, [seller]);
 
   const now = Math.floor(Date.now() / 1000);
-  const startDate = new BN(now + TEST_AUCTION_START_DELAY_SECS);
-  const endDate = new BN(now + TEST_AUCTION_DURATION_SECS);
+  const isDev = isDevnet(connection);
+  const startDelay = isDev
+    ? DEVNET_AUCTION_START_DELAY_SECS
+    : TEST_AUCTION_START_DELAY_SECS;
+  const duration = isDev
+    ? DEVNET_AUCTION_DURATION_SECS
+    : TEST_AUCTION_DURATION_SECS;
+  const startDate = new BN(now + startDelay);
+  const endDate = new BN(now + duration);
   const startingBid = new BN(1_000_000);
   const reservedPrice = new BN(5_000_000);
 
@@ -530,8 +573,35 @@ export async function assertAnchorError(
     throw new Error(`Expected error "${errorName}" but transaction succeeded`);
   } catch (err: any) {
     const msg: string = err?.message ?? err?.toString() ?? "";
-    if (!msg.includes(errorName)) {
-      throw new Error(`Expected error "${errorName}" but got: ${msg}`);
-    }
+    if (msg.includes(errorName)) return;
+
+    const customCode =
+      err?.InstructionError?.[1]?.Custom ??
+      err?.error?.errorCode?.number ??
+      err?.error?.errorCode;
+    const expectedCode = getErrorCodeMap().get(errorName);
+    if (expectedCode !== undefined && customCode === expectedCode) return;
+
+    throw new Error(`Expected error "${errorName}" but got: ${msg}`);
   }
+}
+
+let cachedErrorCodeMap: Map<string, number> | null = null;
+function getErrorCodeMap(): Map<string, number> {
+  if (cachedErrorCodeMap) return cachedErrorCodeMap;
+  const idlPath = path.join(process.cwd(), "target", "idl", "bidx.json");
+  try {
+    const raw = fs.readFileSync(idlPath, "utf8");
+    const idl = JSON.parse(raw);
+    const map = new Map<string, number>();
+    for (const e of idl?.errors ?? []) {
+      if (typeof e?.name === "string" && typeof e?.code === "number") {
+        map.set(e.name, e.code);
+      }
+    }
+    cachedErrorCodeMap = map;
+  } catch {
+    cachedErrorCodeMap = new Map();
+  }
+  return cachedErrorCodeMap;
 }

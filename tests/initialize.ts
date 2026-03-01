@@ -3,7 +3,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { expect } from "chai";
 import { Bidx } from "../target/types/bidx";
-import { airdrop, assertAnchorError, PlatformContext } from "./helpers";
+import { fund, assertAnchorError, PlatformContext } from "./helpers";
 
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
@@ -47,7 +47,7 @@ export function runInitializeTests(getCtx: () => Ctx) {
     });
   });
 
-  // ── register_authenticators ──────
+  // Register authenticators
   describe("register_authenticators", () => {
     it("admin registers new authenticators", async () => {
       const { program, platform } = getCtx();
@@ -76,7 +76,7 @@ export function runInitializeTests(getCtx: () => Ctx) {
       const { program, connection, platform } = getCtx();
 
       const impostor = Keypair.generate();
-      await airdrop(connection, impostor.publicKey);
+      await fund(connection, impostor.publicKey);
 
       await assertAnchorError(
         program.methods

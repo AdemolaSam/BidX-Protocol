@@ -121,6 +121,10 @@ pub mod bidx {
             max_auction_duration
         )
     }
+
+    pub fn close_platform(ctx: Context<ClosePlatform>) -> Result<()> {
+        ctx.accounts.close_platform()
+    }
 }
 
 #[derive(Accounts)]

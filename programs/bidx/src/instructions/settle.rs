@@ -54,7 +54,7 @@ pub struct SettleAuction<'info> {
     pub authentication: Option<Box<Account<'info, Authentication>>>,
 
     #[account(
-        seeds = [b"config"],
+        seeds = [b"config", platform_config.admin.as_ref()],
         bump = platform_config.bump
     )]
     pub platform_config: Box<Account<'info, PlatformConfig>>,

@@ -10,7 +10,7 @@ pub struct RemoveAuthenticator<'info> {
     pub admin: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"authenticators_registry".as_ref()],
+        seeds = [b"authenticators_registry".as_ref(), registry.admin.as_ref()],
         bump
     )]
     pub registry: Account<'info, AuthenticatorsRegistry>,

@@ -1,4 +1,5 @@
 pub mod create_auction;
+pub mod close_platform;
 pub mod end_auction;
 pub mod initialize;
 pub mod place_bid;
@@ -12,6 +13,7 @@ pub mod toggle_pause_platform;
 pub mod withdraw_bid;
 
 pub use create_auction::*;
+pub use close_platform::*;
 pub use end_auction::*;
 pub use initialize::*;
 pub use place_bid::*;

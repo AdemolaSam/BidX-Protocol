@@ -13,7 +13,7 @@ pub struct TogglePause <'info> {
 
     #[account(
         mut,
-        seeds = [b"config"],
+        seeds = [b"config", platform_config.admin.as_ref()],
         bump = platform_config.bump,
         has_one = admin @ ConfigError::ExclusiveToAdmin,
     )]

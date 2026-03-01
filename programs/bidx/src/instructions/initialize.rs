@@ -11,24 +11,24 @@ pub struct InitializePlatform<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = 8 + PlatformConfig::INIT_SPACE,
-        seeds = [b"config".as_ref()],
+        seeds = [b"config".as_ref(), admin.key().as_ref()],
         bump
     )]
     pub platform_config: Account<'info, PlatformConfig>,
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = 8 + AuthenticatorsRegistry::INIT_SPACE,
-        seeds = [b"authenticators_registry".as_ref()],
+        seeds = [b"authenticators_registry".as_ref(), admin.key().as_ref()],
         bump
     )]
     pub authenticators_registry: Account<'info, AuthenticatorsRegistry>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         associated_token::mint = usdc_mint,
         associated_token::authority = platform_config,
@@ -36,7 +36,7 @@ pub struct InitializePlatform<'info> {
     pub treasury_usdc: Account<'info, TokenAccount>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         associated_token::mint = wsol_mint,
         associated_token::authority = wsol_mint

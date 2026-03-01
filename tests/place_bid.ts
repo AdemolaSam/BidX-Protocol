@@ -10,7 +10,7 @@ import {
 import { expect } from "chai";
 import { Bidx } from "../target/types/bidx";
 import {
-  airdrop,
+  fund,
   assertAnchorError,
   createFundedTokenAccount,
   createTokenMint,
@@ -35,12 +35,12 @@ export function runPlaceBidTests(getCtx: () => Ctx) {
       auctionCtx = await setupDigitalNftAuction(program, connection, platform);
     });
 
-    // ── success paths
+    // success paths
 
     it("ensures first bid is higher than starting bid", async () => {
       const { program, connection, platform } = getCtx();
       const bidder = Keypair.generate();
-      await airdrop(connection, bidder.publicKey);
+      await fund(connection, bidder.publicKey);
 
       const bidAmount = new BN(2_000_000); // 2 USDC > 1 USDC starting_bid
 
@@ -106,7 +106,7 @@ export function runPlaceBidTests(getCtx: () => Ctx) {
     it("bidder increases their existing bid", async () => {
       const { program, connection, platform } = getCtx();
       const bidder = Keypair.generate();
-      await airdrop(connection, bidder.publicKey);
+      await fund(connection, bidder.publicKey);
 
       const firstBid = new BN(3_000_000);
       const increase = new BN(2_000_000);
@@ -180,7 +180,7 @@ export function runPlaceBidTests(getCtx: () => Ctx) {
       );
 
       const bidder = Keypair.generate();
-      await airdrop(connection, bidder.publicKey);
+      await fund(connection, bidder.publicKey);
 
       const bidAmount = new BN(2_000_000);
       const bidderTokenAccount = await createFundedTokenAccount(
@@ -227,7 +227,7 @@ export function runPlaceBidTests(getCtx: () => Ctx) {
     it("rejects wrong token mint / ensures bidders can only bid with approved token", async () => {
       const { program, connection, platform } = getCtx();
       const bidder = Keypair.generate();
-      await airdrop(connection, bidder.publicKey);
+      await fund(connection, bidder.publicKey);
 
       const wrongMint = await createTokenMint(connection, platform.admin, 6);
       const bidAmount = new BN(2_000_000);
@@ -276,7 +276,7 @@ export function runPlaceBidTests(getCtx: () => Ctx) {
     it("prevents bid amount less than the current highest bid", async () => {
       const { program, connection, platform } = getCtx();
       const bidder = Keypair.generate();
-      await airdrop(connection, bidder.publicKey);
+      await fund(connection, bidder.publicKey);
 
       const tooLow = new BN(500_000); // 0.5 USDC < 1 USDC starting_bid
 

@@ -31,7 +31,7 @@ pub struct AttestAuthentication<'info> {
     pub authentication: Account<'info, Authentication>,
 
     #[account(
-        seeds = [b"authenticators_registry"],
+        seeds = [b"authenticators_registry", registry.admin.as_ref()],
         bump
     )]
     pub registry: Account<'info, AuthenticatorsRegistry>

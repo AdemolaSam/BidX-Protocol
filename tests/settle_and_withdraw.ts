@@ -16,7 +16,6 @@ import {
 import { expect } from "chai";
 import { Bidx } from "../target/types/bidx";
 import {
-  airdrop,
   assertAnchorError,
   createFundedTokenAccount,
   getBidPDA,
@@ -380,7 +379,7 @@ export function runSettleAndWithdrawTests(getCtx: () => Ctx) {
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // --------------- WITHDRAW -------------------------
 
   describe("withdraw_bid", () => {
     let auctionCtx: AuctionContext;

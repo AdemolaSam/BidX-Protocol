@@ -8,11 +8,14 @@ skip-lint = false
 [programs.localnet]
 bidx = "2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm"
 
+[programs.devnet]
+bidx = "2skNLUQeMc1ZBKPPXEuUEms2WvREu2TpVT5R7JvWzNVm"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
