@@ -92,7 +92,7 @@ Authenticators Registry
 
 ### create_auction
 
-This is the process of listing auctions and making the available to the public after approval
+This is the process of listing auctions and making them available to the public after approval
 
 _Requirements_
 
