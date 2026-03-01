@@ -47,17 +47,19 @@ so the settle/withdraw suite takes longer on devnet.
 
 ## BIDX Protocol's Architectural Diagram
 
-Summarized
+Summarized Flow
+
 ![Summarized Flow Chart](./Assets//BidX-Summarized%20Arch%20Diagram.drawio.png)
 
 Full
+
 ![Full](./Assets//BidX%20Architectural%20Diagram-2026-02-08-030655.png)
 
 See the different component at: [Architectural Diagram](https://docs.google.com/document/d/1seagNHfNQQNR2gh0QuAQ1Ie_4g7tpYkMLmbrSVc-G-4/edit?usp=sharing)
 
 ## CORE INSTRUCTIONS
 
-### INITIALIZE (SETUP PLATFORM)
+### initialize (SETUP PLATFORM)
 
 This is the first step where the platform is setup, and inital authenticators are added.
 
@@ -73,7 +75,7 @@ _Settings_
 - minimum auction duration (e.g. 1 hour)
 - maximum auction duration (eg. 10 days)
 
-### CREATE AUCTION
+### create_auction
 
 This is the process of listing auctions and making the available to the public after approval
 
@@ -104,10 +106,42 @@ _Requirements_
 
   ... to be continued
 
-### REMOVE AUTHENTICATOR
+### register_authenticators & remove_authenticator
+
+Admin can add authenticators to the platform and can remove authenticators
 
 ** Warning - Check if authenticator is assigned to auctions before removal. Else, Auctions get stuck in "Pending" state unless Seller cancels and relist them **
 
-### AUTHENTICATION
+### settle
 
-NOTE: authentication settlement is dependent on the success of the auction. for every successful Physical RWA auction that involves an authenticator, a fee set by the admin will be deducted at settlement and paid to the authenticator.
+After auction expiry time, if reserved price is not met the locked NFT will be withdrawable by the seller. Otherwise, settlement instruction is called.
+
+- The NFT is immediately released to the winner through
+- The seller gets payed from the locked escrow
+- Platform fee is deposited to platform's treasury
+- Auhtenticator's fee is paid (if Physical Real World Asset)
+
+### withdraw_bid
+
+None Winning bids makes fund availble for withdrawals into bidder account
+
+### update_platfom_config
+
+Admin can update
+
+- platform fee
+- authentication fee
+- min aucttion start time
+- max auction start time
+
+### toggle_pause_platform
+
+Admin can pause the platorm if a critical error/issue is discovered in the platform. They can unpause it as well
+
+### upload_auth_report
+
+Authenticators can upload report hash containing findings on a Physical Asset they have been assigned to verify
+
+### attest_authentication
+
+Authenticators can approve or decline a Physical RWA if their findings about the asset is not satisfactory (this is only possible after they have uploaded report about the asset)
