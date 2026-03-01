@@ -1,2 +1,0 @@
-[2026-02-27--14-57-37 ERROR surfpool::cli::simnet] Failed to start subgraph and explorer server: Operation not permitted (os error 1)
-[2026-02-27--14-57-37 ERROR surfpool::cli] Internal error: "Solana RPC client error: error sending request for url (https://api.mainnet-beta.solana.com/)"
