@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::states::AuthStatus;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]  // ✅ Add these
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
 pub enum AssetType {
     DigitalNFT,
     PhysicalRWA,
