@@ -99,8 +99,8 @@ pub mod bidx {
         ctx.accounts.settle_auction(nonce)
     }
 
-    pub fn withdraw_bid(ctx: Context<WithdrawBid>, nonce: u64) -> Result<()> { // NOTE: include nonce to satisfy WithdrawBid PDA seeds
-        let _ = nonce; // NOTE: nonce used in account constraints; keep arg to align client + IDL
+    pub fn withdraw_bid(ctx: Context<WithdrawBid>, nonce: u64) -> Result<()> { 
+        let _ = nonce;
         ctx.accounts.withdraw_bid()
     }
 
